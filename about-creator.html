@@ -626,7 +626,6 @@ Video Thumbnail
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script src="firebase-config.js"></script>
 
@@ -667,11 +666,10 @@ document.addEventListener("click",function(event){
 });
 
 /* =========================
-   FIREBASE
+   FIREBASE FIRESTORE
 ========================= */
 
 let db=null;
-let storage=null;
 
 const firebaseReady =
     window.firebaseConfig &&
@@ -688,7 +686,6 @@ if(firebaseReady){
         }
 
         db=firebase.firestore();
-        storage=firebase.storage();
 
         firebase
             .auth()
@@ -877,7 +874,68 @@ function updateMediaFields(){
 }
 
 /* =========================
-   UPLOAD
+   CLOUDINARY UPLOAD
+========================= */
+
+async function uploadToCloudinary(file,resourceType){
+
+    const cloudName="mnsjr7lc";
+
+    const uploadPreset="Kush website upload";
+
+    const uploadUrl=
+        "https://api.cloudinary.com/v1_1/" +
+        cloudName +
+        "/" +
+        resourceType +
+        "/upload";
+
+    const formData=new FormData();
+
+    formData.append("file",file);
+
+    formData.append(
+        "upload_preset",
+        uploadPreset
+    );
+
+    const response=await fetch(
+        uploadUrl,
+        {
+            method:"POST",
+            body:formData
+        }
+    );
+
+    if(!response.ok){
+
+        const errorText=
+            await response.text();
+
+        throw new Error(
+            "Cloudinary upload failed: " +
+            errorText
+        );
+
+    }
+
+    const result=
+        await response.json();
+
+    if(!result.secure_url){
+
+        throw new Error(
+            "Cloudinary did not return a file URL."
+        );
+
+    }
+
+    return result.secure_url;
+
+}
+
+/* =========================
+   POST MEDIA
 ========================= */
 
 async function uploadMedia(){
@@ -885,10 +943,10 @@ async function uploadMedia(){
     const status=
         document.getElementById("uploadStatus");
 
-    if(!db || !storage){
+    if(!db){
 
         status.textContent=
-            "Firebase is not configured.";
+            "Firebase Firestore is not configured.";
 
         return;
 
@@ -901,16 +959,26 @@ async function uploadMedia(){
         document.getElementById("mediaType").value;
 
     const name=
-        document.getElementById("mediaName").value.trim();
+        document
+            .getElementById("mediaName")
+            .value
+            .trim();
 
     const description=
-        document.getElementById("mediaDescription").value.trim();
+        document
+            .getElementById("mediaDescription")
+            .value
+            .trim();
 
     const mediaFile=
-        document.getElementById("mediaFile").files[0];
+        document
+            .getElementById("mediaFile")
+            .files[0];
 
     const thumbnailFile=
-        document.getElementById("thumbnailFile").files[0];
+        document
+            .getElementById("thumbnailFile")
+            .files[0];
 
     if(!name){
 
@@ -939,56 +1007,63 @@ async function uploadMedia(){
 
     }
 
+    if(
+        type==="photo" &&
+        !mediaFile.type.startsWith("image/")
+    ){
+
+        status.textContent=
+            "Please select an image file.";
+
+        return;
+
+    }
+
+    if(
+        type==="video" &&
+        !mediaFile.type.startsWith("video/")
+    ){
+
+        status.textContent=
+            "Please select a video file.";
+
+        return;
+
+    }
+
     try{
 
-        status.textContent="Uploading...";
+        status.textContent=
+            "Uploading media...";
 
-        const safeName=
-            mediaFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
-
-        const filePath=
-            "media/" +
-            page +
-            "/" +
-            Date.now() +
-            "_" +
-            safeName;
-
-        const fileRef=
-            storage.ref().child(filePath);
-
-        await fileRef.put(mediaFile);
+        const resourceType=
+            type==="video"
+            ? "video"
+            : "image";
 
         const url=
-            await fileRef.getDownloadURL();
+            await uploadToCloudinary(
+                mediaFile,
+                resourceType
+            );
 
         let thumbnailUrl="";
 
         if(type==="video" && thumbnailFile){
 
-            const safeThumbnail=
-                thumbnailFile.name.replace(
-                    /[^a-zA-Z0-9._-]/g,
-                    "_"
-                );
-
-            const thumbnailPath=
-                "thumbnails/" +
-                page +
-                "/" +
-                Date.now() +
-                "_" +
-                safeThumbnail;
-
-            const thumbnailRef=
-                storage.ref().child(thumbnailPath);
-
-            await thumbnailRef.put(thumbnailFile);
+            status.textContent=
+                "Uploading video thumbnail...";
 
             thumbnailUrl=
-                await thumbnailRef.getDownloadURL();
+                await uploadToCloudinary(
+                    thumbnailFile,
+                    "image"
+                );
 
         }
+
+        status.textContent=
+            "Saving post information...";
 
         await db.collection("media").add({
 
@@ -1012,17 +1087,29 @@ async function uploadMedia(){
         status.textContent=
             "Posted successfully.";
 
-        document.getElementById("mediaName").value="";
-        document.getElementById("mediaDescription").value="";
-        document.getElementById("mediaFile").value="";
-        document.getElementById("thumbnailFile").value="";
+        document
+            .getElementById("mediaName")
+            .value="";
+
+        document
+            .getElementById("mediaDescription")
+            .value="";
+
+        document
+            .getElementById("mediaFile")
+            .value="";
+
+        document
+            .getElementById("thumbnailFile")
+            .value="";
 
     }catch(error){
 
         console.error(error);
 
         status.textContent=
-            "Upload failed. Check Firebase Storage and Firestore rules.";
+            "Upload failed: " +
+            error.message;
 
     }
 
@@ -1031,4 +1118,5 @@ async function uploadMedia(){
 </script>
 
 </body>
+
 </html>
