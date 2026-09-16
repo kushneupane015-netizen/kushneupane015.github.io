@@ -223,6 +223,7 @@ main{
     max-height:350px;
     object-fit:cover;
     background:#000;
+    cursor:pointer;
 }
 
 .media-info{
@@ -247,6 +248,61 @@ main{
     border:1px solid rgba(255,255,255,.14);
     border-radius:20px;
     color:rgba(255,255,255,.8);
+}
+
+/* FULL SCREEN VIEWER */
+
+#mediaViewer{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:5000;
+    background:rgba(0,0,0,.94);
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+}
+
+#mediaViewer.active{
+    display:flex;
+}
+
+#viewerClose{
+    position:absolute;
+    top:20px;
+    right:25px;
+    width:50px;
+    height:50px;
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:50%;
+    background:rgba(0,0,0,.6);
+    color:white;
+    font-size:30px;
+    cursor:pointer;
+    z-index:5001;
+}
+
+#viewerContent{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+#viewerContent img,
+#viewerContent video{
+    max-width:95%;
+    max-height:90vh;
+    object-fit:contain;
+    border-radius:10px;
+}
+
+#viewerContent iframe{
+    width:min(1000px,95vw);
+    height:min(70vh,600px);
+    border:0;
+    border-radius:12px;
 }
 
 @media(max-width:600px){
@@ -274,6 +330,16 @@ main{
 
     #searchResults{
         grid-template-columns:1fr;
+    }
+
+    #mediaViewer{
+        padding:15px;
+    }
+
+    #viewerContent img,
+    #viewerContent video{
+        max-width:100%;
+        max-height:85vh;
     }
 }
 
@@ -348,9 +414,18 @@ Enter something to search.
 
 </main>
 
+<!-- FULL SCREEN VIEWER -->
+
+<div id="mediaViewer">
+
+<button id="viewerClose" onclick="closeViewer()">×</button>
+
+<div id="viewerContent"></div>
+
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script src="firebase-config.js"></script>
 
@@ -373,7 +448,9 @@ if(firebaseReady){
         db=firebase.firestore();
 
     }catch(error){
+
         console.error(error);
+
     }
 }
 
@@ -383,13 +460,17 @@ const menuButton=document.getElementById("menuButton");
 const menu=document.getElementById("menu");
 
 function toggleMenu(){
+
     menu.classList.toggle("active");
     menuButton.classList.toggle("active");
+
 }
 
 function closeMenu(){
+
     menu.classList.remove("active");
     menuButton.classList.remove("active");
+
 }
 
 document.addEventListener("click",function(event){
@@ -398,7 +479,9 @@ document.addEventListener("click",function(event){
         !menu.contains(event.target) &&
         !menuButton.contains(event.target)
     ){
+
         closeMenu();
+
     }
 
 });
@@ -423,6 +506,115 @@ function escapeHTML(value){
     );
 }
 
+/* YOUTUBE */
+
+function getYouTubeId(url){
+
+    if(!url){
+        return "";
+    }
+
+    const patterns=[
+        /youtube\.com\/watch\?v=([^&]+)/i,
+        /youtu\.be\/([^?&]+)/i,
+        /youtube\.com\/embed\/([^?&]+)/i,
+        /youtube\.com\/shorts\/([^?&]+)/i
+    ];
+
+    for(const pattern of patterns){
+
+        const match=url.match(pattern);
+
+        if(match){
+            return match[1];
+        }
+
+    }
+
+    return "";
+}
+
+/* VIEWER */
+
+function openViewer(type,url){
+
+    const viewer=document.getElementById("mediaViewer");
+    const content=document.getElementById("viewerContent");
+
+    content.innerHTML="";
+
+    const youtubeId=getYouTubeId(url);
+
+    if(youtubeId){
+
+        const iframe=document.createElement("iframe");
+
+        iframe.src=
+            "https://www.youtube.com/embed/" +
+            encodeURIComponent(youtubeId) +
+            "?autoplay=1";
+
+        iframe.allow=
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+
+        iframe.allowFullscreen=true;
+
+        content.appendChild(iframe);
+
+    }else if(type==="photo"){
+
+        const image=document.createElement("img");
+
+        image.src=url;
+
+        content.appendChild(image);
+
+    }else{
+
+        const video=document.createElement("video");
+
+        video.src=url;
+        video.controls=true;
+        video.autoplay=true;
+
+        content.appendChild(video);
+
+    }
+
+    viewer.classList.add("active");
+    document.body.style.overflow="hidden";
+
+}
+
+function closeViewer(){
+
+    const viewer=document.getElementById("mediaViewer");
+    const content=document.getElementById("viewerContent");
+
+    viewer.classList.remove("active");
+    content.innerHTML="";
+    document.body.style.overflow="";
+
+}
+
+document
+    .getElementById("mediaViewer")
+    .addEventListener("click",function(event){
+
+        if(event.target===this){
+            closeViewer();
+        }
+
+    });
+
+document.addEventListener("keydown",function(event){
+
+    if(event.key==="Escape"){
+        closeViewer();
+    }
+
+});
+
 /* CREATE CARD */
 
 function createCard(data){
@@ -430,6 +622,8 @@ function createCard(data){
     const url=escapeHTML(data.url);
     const name=escapeHTML(data.name);
     const description=escapeHTML(data.description);
+
+    const safeURL=String(data.url || "").replace(/'/g,"\\'");
 
     if(data.type==="photo"){
 
@@ -440,6 +634,7 @@ function createCard(data){
                 class="media-preview"
                 src="${url}"
                 alt="${name}"
+                onclick="openViewer('photo','${safeURL}')"
             >
 
             <div class="media-info">
@@ -461,14 +656,15 @@ function createCard(data){
             class="media-preview"
             src="${escapeHTML(data.thumbnailUrl)}"
             alt="${name}"
+            onclick="openViewer('video','${safeURL}')"
         >
         `
         : `
         <video
             class="media-preview"
             src="${url}"
-            controls
             preload="metadata"
+            onclick="openViewer('video','${safeURL}')"
         ></video>
         `;
 
@@ -482,12 +678,6 @@ function createCard(data){
             <h3>${name}</h3>
 
             <p>${description}</p>
-
-            <video
-                src="${url}"
-                controls
-                style="width:100%;margin-top:10px;border-radius:10px"
-            ></video>
 
         </div>
 
@@ -516,6 +706,7 @@ async function performSearch(){
         `;
 
         return;
+
     }
 
     if(!db){
@@ -527,6 +718,7 @@ async function performSearch(){
         `;
 
         return;
+
     }
 
     results.innerHTML=`
@@ -537,23 +729,52 @@ async function performSearch(){
 
     try{
 
-        const snapshot=await db
-            .collection("media")
-            .get();
+        const snapshot=
+            await db.collection("media").get();
 
         const matches=snapshot.docs
-            .map(doc=>doc.data())
-            .filter(data=>{
+            .map(function(doc){
 
-                const name=String(data.name || "").toLowerCase();
-                const description=String(data.description || "").toLowerCase();
-                const page=String(data.page || "").toLowerCase();
+                return {
+                    id:doc.id,
+                    ...doc.data()
+                };
+
+            })
+            .filter(function(data){
+
+                const name=
+                    String(data.name || "")
+                    .toLowerCase();
+
+                const description=
+                    String(data.description || "")
+                    .toLowerCase();
+
+                const page=
+                    String(data.page || "")
+                    .toLowerCase();
 
                 return(
                     name.includes(input) ||
                     description.includes(input) ||
                     page.includes(input)
                 );
+
+            })
+            .sort(function(a,b){
+
+                const aTime=
+                    a.createdAt && a.createdAt.seconds
+                    ? a.createdAt.seconds
+                    : 0;
+
+                const bTime=
+                    b.createdAt && b.createdAt.seconds
+                    ? b.createdAt.seconds
+                    : 0;
+
+                return bTime-aTime;
 
             });
 
@@ -566,9 +787,11 @@ async function performSearch(){
             `;
 
             return;
+
         }
 
-        results.innerHTML=matches
+        results.innerHTML=
+            matches
             .map(createCard)
             .join("");
 
@@ -582,7 +805,9 @@ async function performSearch(){
                 Check your Firebase setup.
             </div>
         `;
+
     }
+
 }
 
 document
