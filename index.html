@@ -192,6 +192,7 @@ main{
     max-height:350px;
     object-fit:cover;
     background:#000;
+    cursor:pointer;
 }
 
 .media-info{
@@ -218,6 +219,61 @@ main{
     color:rgba(255,255,255,.8);
 }
 
+/* FULL SCREEN MEDIA VIEWER */
+
+#mediaViewer{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:5000;
+    background:rgba(0,0,0,.94);
+    align-items:center;
+    justify-content:center;
+    padding:30px;
+}
+
+#mediaViewer.active{
+    display:flex;
+}
+
+#viewerClose{
+    position:absolute;
+    top:20px;
+    right:25px;
+    width:50px;
+    height:50px;
+    border:1px solid rgba(255,255,255,.3);
+    border-radius:50%;
+    background:rgba(0,0,0,.6);
+    color:white;
+    font-size:30px;
+    cursor:pointer;
+    z-index:5001;
+}
+
+#viewerContent{
+    width:100%;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+#viewerContent img,
+#viewerContent video{
+    max-width:95%;
+    max-height:90vh;
+    object-fit:contain;
+    border-radius:10px;
+}
+
+#viewerContent iframe{
+    width:min(1000px,95vw);
+    height:min(70vh,600px);
+    border:0;
+    border-radius:12px;
+}
+
 /* MOBILE */
 
 @media(max-width:600px){
@@ -241,6 +297,16 @@ main{
 
     #mediaGrid{
         grid-template-columns:1fr;
+    }
+
+    #mediaViewer{
+        padding:15px;
+    }
+
+    #viewerContent img,
+    #viewerContent video{
+        max-width:100%;
+        max-height:85vh;
     }
 }
 </style>
@@ -297,14 +363,45 @@ main{
 
 </main>
 
+<!-- FULL SCREEN VIEWER -->
+
+<div id="mediaViewer">
+
+<button id="viewerClose" onclick="closeViewer()">×</button>
+
+<div id="viewerContent"></div>
+
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script src="firebase-config.js"></script>
-<script src="media.js"></script>
 
 <script>
+
+let db=null;
+
+const firebaseReady =
+    window.firebaseConfig &&
+    !String(window.firebaseConfig.apiKey).startsWith("PASTE_");
+
+if(firebaseReady){
+
+    try{
+
+        if(!firebase.apps.length){
+            firebase.initializeApp(window.firebaseConfig);
+        }
+
+        db=firebase.firestore();
+
+    }catch(error){
+        console.error(error);
+    }
+}
+
+/* MENU */
 
 const menuButton=document.getElementById("menuButton");
 const menu=document.getElementById("menu");
@@ -329,6 +426,296 @@ document.addEventListener("click",function(event){
     }
 
 });
+
+/* ESCAPE HTML */
+
+function escapeHTML(value){
+
+    return String(value || "").replace(
+        /[&<>"']/g,
+        function(character){
+
+            return {
+                "&":"&amp;",
+                "<":"&lt;",
+                ">":"&gt;",
+                '"':"&quot;",
+                "'":"&#039;"
+            }[character];
+
+        }
+    );
+}
+
+/* YOUTUBE */
+
+function getYouTubeId(url){
+
+    if(!url){
+        return "";
+    }
+
+    const patterns=[
+        /youtube\.com\/watch\?v=([^&]+)/i,
+        /youtu\.be\/([^?&]+)/i,
+        /youtube\.com\/embed\/([^?&]+)/i,
+        /youtube\.com\/shorts\/([^?&]+)/i
+    ];
+
+    for(const pattern of patterns){
+
+        const match=url.match(pattern);
+
+        if(match){
+            return match[1];
+        }
+
+    }
+
+    return "";
+}
+
+/* VIEWER */
+
+function openViewer(type,url){
+
+    const viewer=document.getElementById("mediaViewer");
+    const content=document.getElementById("viewerContent");
+
+    content.innerHTML="";
+
+    const youtubeId=getYouTubeId(url);
+
+    if(youtubeId){
+
+        const iframe=document.createElement("iframe");
+
+        iframe.src=
+            "https://www.youtube.com/embed/" +
+            encodeURIComponent(youtubeId) +
+            "?autoplay=1";
+
+        iframe.allow=
+            "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+
+        iframe.allowFullscreen=true;
+
+        content.appendChild(iframe);
+
+    }else if(type==="photo"){
+
+        const image=document.createElement("img");
+
+        image.src=url;
+
+        content.appendChild(image);
+
+    }else{
+
+        const video=document.createElement("video");
+
+        video.src=url;
+        video.controls=true;
+        video.autoplay=true;
+
+        content.appendChild(video);
+
+    }
+
+    viewer.classList.add("active");
+    document.body.style.overflow="hidden";
+}
+
+function closeViewer(){
+
+    const viewer=document.getElementById("mediaViewer");
+    const content=document.getElementById("viewerContent");
+
+    viewer.classList.remove("active");
+    content.innerHTML="";
+    document.body.style.overflow="";
+
+}
+
+document
+    .getElementById("mediaViewer")
+    .addEventListener("click",function(event){
+
+        if(event.target===this){
+            closeViewer();
+        }
+
+    });
+
+document.addEventListener("keydown",function(event){
+
+    if(event.key==="Escape"){
+        closeViewer();
+    }
+
+});
+
+/* MEDIA CARD */
+
+function mediaCard(data){
+
+    const url=escapeHTML(data.url);
+    const name=escapeHTML(data.name);
+    const description=escapeHTML(data.description);
+
+    const safeURL=String(data.url || "").replace(/'/g,"\\'");
+
+    if(data.type==="photo"){
+
+        return `
+        <article class="media-card">
+
+            <img
+                class="media-preview"
+                src="${url}"
+                alt="${name}"
+                onclick="openViewer('photo','${safeURL}')"
+            >
+
+            <div class="media-info">
+
+                <h3>${name}</h3>
+
+                <p>${description}</p>
+
+            </div>
+
+        </article>
+        `;
+
+    }
+
+    let thumbnail="";
+
+    if(data.thumbnailUrl){
+
+        thumbnail=`
+        <img
+            class="media-preview"
+            src="${escapeHTML(data.thumbnailUrl)}"
+            alt="${name}"
+            onclick="openViewer('video','${safeURL}')"
+        >
+        `;
+
+    }else{
+
+        thumbnail=`
+        <video
+            class="media-preview"
+            src="${url}"
+            preload="metadata"
+            onclick="openViewer('video','${safeURL}')"
+        ></video>
+        `;
+
+    }
+
+    return `
+    <article class="media-card">
+
+        ${thumbnail}
+
+        <div class="media-info">
+
+            <h3>${name}</h3>
+
+            <p>${description}</p>
+
+        </div>
+
+    </article>
+    `;
+}
+
+/* LOAD HOME MEDIA */
+
+async function loadMedia(page){
+
+    const box=document.getElementById("mediaGrid");
+
+    if(!box){
+        return;
+    }
+
+    if(!db){
+
+        box.innerHTML=`
+            <div class="empty-state">
+                Firebase is not configured.
+            </div>
+        `;
+
+        return;
+    }
+
+    try{
+
+        const snapshot=
+            await db.collection("media")
+            .where("page","==",page)
+            .get();
+
+        const documents=snapshot.docs
+            .map(function(doc){
+
+                return {
+                    id:doc.id,
+                    ...doc.data()
+                };
+
+            })
+            .sort(function(a,b){
+
+                const aTime=
+                    a.createdAt && a.createdAt.seconds
+                    ? a.createdAt.seconds
+                    : 0;
+
+                const bTime=
+                    b.createdAt && b.createdAt.seconds
+                    ? b.createdAt.seconds
+                    : 0;
+
+                return bTime-aTime;
+
+            });
+
+        if(!documents.length){
+
+            box.innerHTML=`
+                <div class="empty-state">
+                    No uploads yet.
+                </div>
+            `;
+
+            return;
+        }
+
+        box.innerHTML=
+            documents
+            .map(mediaCard)
+            .join("");
+
+    }catch(error){
+
+        console.error(error);
+
+        box.innerHTML=`
+            <div class="empty-state">
+                Could not load uploads.
+                Check your Firebase setup.
+            </div>
+        `;
+
+    }
+
+}
 
 loadMedia("home");
 
