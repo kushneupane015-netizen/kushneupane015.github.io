@@ -213,6 +213,84 @@ main{
     color:rgba(255,255,255,.8);
 }
 
+/* VIDEO THUMBNAIL */
+
+.video-wrapper{
+    position:relative;
+    width:100%;
+    background:#000;
+    cursor:pointer;
+}
+
+.video-wrapper img{
+    display:block;
+    width:100%;
+    max-height:350px;
+    object-fit:cover;
+}
+
+.play-button{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    width:70px;
+    height:70px;
+    border-radius:50%;
+    background:rgba(0,0,0,.7);
+    border:2px solid rgba(255,255,255,.8);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    color:white;
+}
+
+/* FULLSCREEN MODAL */
+
+#mediaModal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.92);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+    padding:20px;
+}
+
+#mediaModal.active{
+    display:flex;
+}
+
+#modalContent{
+    max-width:95vw;
+    max-height:90vh;
+}
+
+#modalContent img,
+#modalContent video,
+#modalContent iframe{
+    max-width:95vw;
+    max-height:90vh;
+    border:none;
+    border-radius:10px;
+}
+
+.modal-close{
+    position:absolute;
+    top:20px;
+    right:25px;
+    width:45px;
+    height:45px;
+    border:none;
+    border-radius:50%;
+    background:rgba(255,255,255,.15);
+    color:white;
+    font-size:28px;
+    cursor:pointer;
+}
+
 @media(max-width:600px){
 
     header{
@@ -287,12 +365,20 @@ main{
 
 </main>
 
+<!-- MEDIA MODAL -->
+
+<div id="mediaModal">
+
+<button class="modal-close" onclick="closeMediaModal()">×</button>
+
+<div id="modalContent"></div>
+
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script src="firebase-config.js"></script>
-<script src="media.js"></script>
 
 <script>
 
@@ -320,7 +406,357 @@ document.addEventListener("click",function(event){
 
 });
 
-loadMedia("projects");
+/* FIREBASE */
+
+const db=firebase.firestore();
+
+/* MODAL */
+
+const mediaModal=document.getElementById("mediaModal");
+const modalContent=document.getElementById("modalContent");
+
+function openMediaModal(type,url){
+
+    modalContent.innerHTML="";
+
+    if(type==="image"){
+
+        const img=document.createElement("img");
+        img.src=url;
+        img.alt="Project image";
+        modalContent.appendChild(img);
+
+    }else if(type==="video"){
+
+        const video=document.createElement("video");
+
+        video.src=url;
+        video.controls=true;
+        video.autoplay=true;
+
+        modalContent.appendChild(video);
+
+    }else if(type==="youtube"){
+
+        const iframe=document.createElement("iframe");
+
+        iframe.src=url;
+        iframe.width="900";
+        iframe.height="506";
+        iframe.allow="autoplay; encrypted-media; picture-in-picture";
+        iframe.allowFullscreen=true;
+
+        modalContent.appendChild(iframe);
+    }
+
+    mediaModal.classList.add("active");
+}
+
+function closeMediaModal(){
+
+    mediaModal.classList.remove("active");
+    modalContent.innerHTML="";
+
+}
+
+mediaModal.addEventListener("click",function(event){
+
+    if(event.target===mediaModal){
+        closeMediaModal();
+    }
+
+});
+
+/* YOUTUBE */
+
+function getYouTubeEmbed(url){
+
+    try{
+
+        const parsed=new URL(url);
+
+        let videoId="";
+
+        if(parsed.hostname.includes("youtube.com")){
+
+            videoId=parsed.searchParams.get("v");
+
+            if(!videoId && parsed.pathname.startsWith("/shorts/")){
+                videoId=parsed.pathname.split("/shorts/")[1].split("/")[0];
+            }
+
+        }
+
+        if(parsed.hostname==="youtu.be"){
+
+            videoId=parsed.pathname.substring(1).split("/")[0];
+
+        }
+
+        if(videoId){
+
+            return "https://www.youtube.com/embed/"+videoId;
+
+        }
+
+    }catch(error){
+
+    }
+
+    return null;
+}
+
+/* LOAD PROJECTS */
+
+async function loadProjects(){
+
+    const mediaGrid=document.getElementById("mediaGrid");
+
+    mediaGrid.innerHTML="";
+
+    try{
+
+        const snapshot=await db
+            .collection("media")
+            .where("page","==","projects")
+            .get();
+
+        if(snapshot.empty){
+
+            mediaGrid.innerHTML=`
+                <div class="empty-state">
+                    No projects have been uploaded yet.
+                </div>
+            `;
+
+            return;
+        }
+
+        const posts=[];
+
+        snapshot.forEach(doc=>{
+
+            const data=doc.data();
+
+            posts.push({
+                id:doc.id,
+                ...data
+            });
+
+        });
+
+        /* NEWEST FIRST */
+
+        posts.sort((a,b)=>{
+
+            const dateA=a.createdAt
+                ? (a.createdAt.toDate ? a.createdAt.toDate().getTime() : new Date(a.createdAt).getTime())
+                : 0;
+
+            const dateB=b.createdAt
+                ? (b.createdAt.toDate ? b.createdAt.toDate().getTime() : new Date(b.createdAt).getTime())
+                : 0;
+
+            return dateB-dateA;
+
+        });
+
+        posts.forEach(data=>{
+
+            const card=document.createElement("div");
+            card.className="media-card";
+
+            const type=data.type || data.mediaType || "image";
+            const url=data.url || data.mediaUrl || "";
+            const thumbnail=data.thumbnail || data.thumbnailUrl || "";
+
+            let preview="";
+
+            /* IMAGE */
+
+            if(type==="image"){
+
+                preview=`
+                    <img
+                        class="media-preview"
+                        src="${escapeHTML(url)}"
+                        alt="${escapeHTML(data.name || "Project image")}"
+                        onclick="openMediaModal('image','${escapeJS(url)}')"
+                        style="cursor:pointer;"
+                    >
+                `;
+
+            }
+
+            /* NORMAL VIDEO */
+
+            else if(type==="video"){
+
+                if(thumbnail){
+
+                    preview=`
+                        <div
+                            class="video-wrapper"
+                            onclick="openMediaModal('video','${escapeJS(url)}')"
+                        >
+                            <img
+                                src="${escapeHTML(thumbnail)}"
+                                alt="${escapeHTML(data.name || "Project video")}"
+                            >
+                            <div class="play-button">▶</div>
+                        </div>
+                    `;
+
+                }else{
+
+                    preview=`
+                        <div
+                            class="video-wrapper"
+                            onclick="openMediaModal('video','${escapeJS(url)}')"
+                        >
+                            <video
+                                class="media-preview"
+                                src="${escapeHTML(url)}"
+                                muted
+                                preload="metadata"
+                            ></video>
+                            <div class="play-button">▶</div>
+                        </div>
+                    `;
+
+                }
+
+            }
+
+            /* YOUTUBE */
+
+            else if(type==="youtube"){
+
+                const embedUrl=getYouTubeEmbed(url);
+
+                if(embedUrl){
+
+                    if(thumbnail){
+
+                        preview=`
+                            <div
+                                class="video-wrapper"
+                                onclick="openMediaModal('youtube','${escapeJS(embedUrl)}')"
+                            >
+                                <img
+                                    src="${escapeHTML(thumbnail)}"
+                                    alt="${escapeHTML(data.name || "YouTube video")}"
+                                >
+                                <div class="play-button">▶</div>
+                            </div>
+                        `;
+
+                    }else{
+
+                        preview=`
+                            <div
+                                class="video-wrapper"
+                                onclick="openMediaModal('youtube','${escapeJS(embedUrl)}')"
+                            >
+                                <div
+                                    style="
+                                        width:100%;
+                                        height:250px;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        background:#000;
+                                        font-size:50px;
+                                    "
+                                >
+                                    ▶
+                                </div>
+                            </div>
+                        `;
+
+                    }
+
+                }
+
+            }
+
+            /* FALLBACK */
+
+            if(!preview && url){
+
+                preview=`
+                    <img
+                        class="media-preview"
+                        src="${escapeHTML(url)}"
+                        alt="${escapeHTML(data.name || "Project")}"
+                    >
+                `;
+
+            }
+
+            card.innerHTML=`
+
+                ${preview}
+
+                <div class="media-info">
+
+                    <h3>
+                        ${escapeHTML(data.name || "Untitled Project")}
+                    </h3>
+
+                    <p>
+                        ${escapeHTML(data.description || "")}
+                    </p>
+
+                </div>
+
+            `;
+
+            mediaGrid.appendChild(card);
+
+        });
+
+    }catch(error){
+
+        console.error("Error loading projects:",error);
+
+        mediaGrid.innerHTML=`
+            <div class="empty-state">
+                Unable to load projects right now.
+            </div>
+        `;
+
+    }
+
+}
+
+/* SECURITY / TEXT HELPERS */
+
+function escapeHTML(value){
+
+    return String(value || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+function escapeJS(value){
+
+    return String(value || "")
+        .replace(/\\/g,"\\\\")
+        .replace(/'/g,"\\'")
+        .replace(/"/g,'\\"')
+        .replace(/\n/g,"\\n")
+        .replace(/\r/g,"\\r");
+
+}
+
+/* START */
+
+loadProjects();
 
 </script>
 
