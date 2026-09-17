@@ -185,6 +185,7 @@ touch-action:none;
 font-size:19px;
 line-height:1.7;
 color:rgba(255,255,255,.9);
+cursor:pointer;
 }
 
 /* CREATOR DETAILS */
@@ -217,6 +218,13 @@ text-decoration:none;
 
 .creator-details a:hover{
 text-decoration:underline;
+}
+
+/* SECRET CLICK LABELS */
+
+.secret-step{
+cursor:pointer;
+user-select:none;
 }
 
 /* SECRET PASSWORD */
@@ -254,7 +262,7 @@ margin-top:12px;
 color:#ff8080;
 }
 
-/* SECRET LOGIN */
+/* ADMIN LOGIN */
 
 #adminLogin{
 display:none;
@@ -479,37 +487,37 @@ display:block;
 @media(max-width:600px){
 
 header{
-    padding:0 15px;
+padding:0 15px;
 }
 
 .menu{
-    right:15px;
-    width:min(245px,calc(100vw - 30px));
+right:15px;
+width:min(245px,calc(100vw - 30px));
 }
 
 main{
-    padding:30px 15px 50px;
+padding:30px 15px 50px;
 }
 
 .content{
-    padding:40px 22px;
+padding:40px 22px;
 }
 
 .content > p{
-    font-size:17px;
+font-size:17px;
 }
 
 .creator-details{
-    padding:22px 18px;
+padding:22px 18px;
 }
 
 .creator-details p{
-    font-size:17px;
+font-size:17px;
 }
 
 .admin-tabs,
 .source-buttons{
-    flex-direction:column;
+flex-direction:column;
 }
 
 }
@@ -528,9 +536,11 @@ id="menuButton"
 onclick="toggleMenu()"
 aria-label="Open menu"
 >
+
 <span></span>
 <span></span>
 <span></span>
+
 </button>
 
 <nav class="menu" id="menu">
@@ -575,27 +585,27 @@ This website was created and designed by Kush Neupane.
 <div class="creator-details">
 
 <p>
-<strong>Name:</strong>
+<strong class="secret-step" data-step="3">Name:</strong>
 Kush Neupane
 </p>
 
 <p>
-<strong>Age:</strong>
+<strong class="secret-step" data-step="4">Age:</strong>
 15
 </p>
 
 <p>
-<strong>Gender:</strong>
+<strong class="secret-step" data-step="5">Gender:</strong>
 Male
 </p>
 
 <p>
-<strong>Date of Birth:</strong>
+<strong class="secret-step" data-step="6">Date of Birth:</strong>
 9th October 2010
 </p>
 
 <p>
-<strong>Nationality:</strong>
+<strong class="secret-step" data-step="7">Nationality:</strong>
 Nepali
 </p>
 
@@ -610,7 +620,7 @@ Student
 </p>
 
 <p>
-<strong>E-mail:</strong>
+<strong class="secret-step" data-step="8">E-mail:</strong>
 <a href="mailto:kushneupane015@gmail.com">
 kushneupane015@gmail.com
 </a>
@@ -646,7 +656,7 @@ Enter
 
 </div>
 
-<!-- SECRET ADMIN LOGIN -->
+<!-- ADMIN LOGIN -->
 
 <div id="adminLogin">
 
@@ -716,7 +726,10 @@ Post To
 <select id="postPage">
 
 <option value="home">Home</option>
-<option value="projects">Projects</option>
+
+<option value="projects">
+Projects
+</option>
 
 </select>
 
@@ -728,10 +741,18 @@ Post To
 Media Type
 </label>
 
-<select id="mediaType" onchange="updateMediaFields()">
+<select
+id="mediaType"
+onchange="updateMediaFields()"
+>
 
-<option value="photo">Photo</option>
-<option value="video">Video</option>
+<option value="photo">
+Photo
+</option>
+
+<option value="video">
+Video
+</option>
 
 </select>
 
@@ -794,6 +815,8 @@ Post from URL
 
 </div>
 
+<!-- DEVICE SOURCE -->
+
 <div
 id="deviceSource"
 class="source-section active"
@@ -832,6 +855,8 @@ accept="image/*"
 </div>
 
 </div>
+
+<!-- URL SOURCE -->
 
 <div
 id="urlSource"
@@ -924,7 +949,9 @@ Loading posts...
 <!-- FIREBASE -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script src="firebase-config.js"></script>
@@ -935,12 +962,16 @@ Loading posts...
 MENU
 ========================= */
 
-const menuButton=document.getElementById("menuButton");
-const menu=document.getElementById("menu");
+const menuButton=
+document.getElementById("menuButton");
+
+const menu=
+document.getElementById("menu");
 
 function toggleMenu(){
 
 menu.classList.toggle("active");
+
 menuButton.classList.toggle("active");
 
 }
@@ -948,196 +979,353 @@ menuButton.classList.toggle("active");
 function closeMenu(){
 
 menu.classList.remove("active");
+
 menuButton.classList.remove("active");
 
 }
 
-document.addEventListener("click",function(event){
+document.addEventListener(
+"click",
+function(event){
 
 if(
-    !menu.contains(event.target) &&
-    !menuButton.contains(event.target)
+!menu.contains(event.target) &&
+!menuButton.contains(event.target)
 ){
 
-    closeMenu();
+closeMenu();
 
 }
 
 });
 
 /* =========================
-FIREBASE FIRESTORE
+FIREBASE
 ========================= */
 
 let db=null;
 
-const firebaseReady =
+const firebaseReady=
 window.firebaseConfig &&
-!String(window.firebaseConfig.apiKey).startsWith("PASTE_");
+!String(
+window.firebaseConfig.apiKey
+).startsWith("PASTE_");
 
 if(firebaseReady){
 
 try{
 
-    if(!firebase.apps.length){
+if(!firebase.apps.length){
 
-        firebase.initializeApp(window.firebaseConfig);
+firebase.initializeApp(
+window.firebaseConfig
+);
 
-    }
+}
 
-    db=firebase.firestore();
+db=firebase.firestore();
 
-    firebase
-        .auth()
-        .signInAnonymously()
-        .catch(function(error){
+firebase
+.auth()
+.signInAnonymously()
+.catch(function(error){
 
-            console.error(error);
+console.error(error);
 
-        });
+});
 
 }catch(error){
 
-    console.error(error);
+console.error(error);
 
 }
 
 }
 
 /* =========================
-SECRET PASSWORD SYSTEM
-FIRST PASSWORD: sikconta
-SECOND PASSWORD: sikconta
+SECRET SEQUENCE
+
+1. LOGO
+2. CREATOR TEXT
+3. NAME LABEL
+4. AGE LABEL
+5. GENDER LABEL
+6. DATE OF BIRTH LABEL
+7. NATIONALITY LABEL
+8. E-MAIL LABEL
+
+FIRST PASSWORD:
+sikconta
+
+SECOND PASSWORD:
+sikconta
 ========================= */
 
+const creatorLogo=
+document.getElementById("creatorLogo");
+
 const creatorSecretTrigger=
-    document.getElementById("creatorSecretTrigger");
+document.getElementById(
+"creatorSecretTrigger"
+);
+
+const secretSteps=
+document.querySelectorAll(
+".secret-step"
+);
 
 const secretUnlock=
-    document.getElementById("secretUnlock");
+document.getElementById(
+"secretUnlock"
+);
 
 const secretUnlockForm=
-    document.getElementById("secretUnlockForm");
+document.getElementById(
+"secretUnlockForm"
+);
 
 const secretPassword=
-    document.getElementById("secretPassword");
+document.getElementById(
+"secretPassword"
+);
 
 const secretMessage=
-    document.getElementById("secretMessage");
+document.getElementById(
+"secretMessage"
+);
+
+let secretStep=1;
+
+/* STEP 1 */
+
+creatorLogo.addEventListener(
+"click",
+function(){
+
+if(secretStep===1){
+
+secretStep=2;
+
+}else{
+
+resetSecretSequence();
+
+}
+
+});
+
+/* STEP 2 */
 
 creatorSecretTrigger.addEventListener(
 "click",
 function(){
 
-    secretUnlock.style.display="block";
+if(secretStep===2){
 
-    secretMessage.textContent="";
+secretStep=3;
 
-    secretPassword.value="";
+}else{
 
-    secretPassword.focus();
-
-    secretUnlock.scrollIntoView({
-        behavior:"smooth",
-        block:"center"
-    });
+resetSecretSequence();
 
 }
+
+});
+
+/* STEPS 3-8 */
+
+secretSteps.forEach(
+function(stepElement){
+
+stepElement.addEventListener(
+"click",
+function(event){
+
+event.preventDefault();
+
+event.stopPropagation();
+
+const requiredStep=
+Number(
+stepElement.getAttribute(
+"data-step"
+)
 );
+
+if(secretStep===requiredStep){
+
+if(requiredStep===8){
+
+showSecretPassword();
+
+}else{
+
+secretStep++;
+
+}
+
+}else{
+
+resetSecretSequence();
+
+}
+
+});
+
+});
+
+/* SHOW PASSWORD */
+
+function showSecretPassword(){
+
+secretStep=1;
+
+secretUnlock.style.display="block";
+
+secretMessage.textContent="";
+
+secretPassword.value="";
+
+secretPassword.focus();
+
+secretUnlock.scrollIntoView({
+
+behavior:"smooth",
+
+block:"center"
+
+});
+
+}
+
+/* RESET */
+
+function resetSecretSequence(){
+
+secretStep=1;
+
+}
+
+/* FIRST PASSWORD */
 
 secretUnlockForm.addEventListener(
 "submit",
 function(event){
 
-    event.preventDefault();
+event.preventDefault();
 
-    if(secretPassword.value==="sikconta"){
+if(
+secretPassword.value==="sikconta"
+){
 
-        secretUnlock.style.display="none";
+secretUnlock.style.display="none";
 
-        secretMessage.textContent="";
+secretMessage.textContent="";
 
-        document.getElementById("adminLogin").style.display="block";
+document.getElementById(
+"adminLogin"
+).style.display="block";
 
-        document.getElementById("adminPassword").value="";
+document.getElementById(
+"adminPassword"
+).value="";
 
-        document.getElementById("loginMessage").textContent="";
+document.getElementById(
+"loginMessage"
+).textContent="";
 
-        document
-            .getElementById("adminLogin")
-            .scrollIntoView({
-                behavior:"smooth",
-                block:"center"
-            });
+document.getElementById(
+"adminLogin"
+).scrollIntoView({
 
-        setTimeout(function(){
+behavior:"smooth",
 
-            document
-                .getElementById("adminPassword")
-                .focus();
+block:"center"
 
-        },400);
+});
 
-    }else{
+setTimeout(
+function(){
 
-        secretMessage.textContent=
-            "Incorrect password.";
+document.getElementById(
+"adminPassword"
+).focus();
 
-    }
-
-}
+},
+400
 );
 
+}else{
+
+secretMessage.textContent=
+"Incorrect password.";
+
+}
+
+});
+
 /* =========================
-LOGIN
-SECOND PASSWORD: sikconta
+ADMIN LOGIN
 ========================= */
 
 function loginAdmin(){
 
 const password=
-    document.getElementById("adminPassword").value;
+document.getElementById(
+"adminPassword"
+).value;
 
 const message=
-    document.getElementById("loginMessage");
+document.getElementById(
+"loginMessage"
+);
 
 if(password==="sikconta"){
 
-    document.getElementById("adminLogin").style.display="none";
+document.getElementById(
+"adminLogin"
+).style.display="none";
 
-    document.getElementById("adminPanel").style.display="block";
+document.getElementById(
+"adminPanel"
+).style.display="block";
 
-    message.textContent="";
+message.textContent="";
 
-    showAdminSection("uploadSection");
+showAdminSection(
+"uploadSection"
+);
 
-    document
-        .getElementById("adminPanel")
-        .scrollIntoView({
-            behavior:"smooth",
-            block:"center"
-        });
+document.getElementById(
+"adminPanel"
+).scrollIntoView({
+
+behavior:"smooth",
+
+block:"center"
+
+});
 
 }else{
 
-    message.textContent="Incorrect password.";
+message.textContent=
+"Incorrect password.";
 
 }
 
 }
 
-document
-    .getElementById("adminLoginForm")
-    .addEventListener(
-        "submit",
-        function(event){
+document.getElementById(
+"adminLoginForm"
+).addEventListener(
+"submit",
+function(event){
 
-            event.preventDefault();
+event.preventDefault();
 
-            loginAdmin();
+loginAdmin();
 
-        }
-    );
+});
 
 /* =========================
 LOGOUT
@@ -1145,21 +1333,39 @@ LOGOUT
 
 function logoutAdmin(){
 
-document.getElementById("adminPanel").style.display="none";
+document.getElementById(
+"adminPanel"
+).style.display="none";
 
-document.getElementById("adminLogin").style.display="none";
+document.getElementById(
+"adminLogin"
+).style.display="none";
 
-document.getElementById("secretUnlock").style.display="none";
+document.getElementById(
+"secretUnlock"
+).style.display="none";
 
-document.getElementById("adminPassword").value="";
+document.getElementById(
+"adminPassword"
+).value="";
 
-document.getElementById("secretPassword").value="";
+document.getElementById(
+"secretPassword"
+).value="";
 
-document.getElementById("loginMessage").textContent="";
+document.getElementById(
+"loginMessage"
+).textContent="";
 
-document.getElementById("secretMessage").textContent="";
+document.getElementById(
+"secretMessage"
+).textContent="";
 
-document.getElementById("uploadStatus").textContent="";
+document.getElementById(
+"uploadStatus"
+).textContent="";
+
+resetSecretSequence();
 
 }
 
@@ -1167,91 +1373,133 @@ document.getElementById("uploadStatus").textContent="";
 ADMIN TABS
 ========================= */
 
-function showAdminSection(sectionId){
+function showAdminSection(
+sectionId
+){
 
 document
-    .querySelectorAll(".admin-section")
-    .forEach(function(section){
+.querySelectorAll(".admin-section")
+.forEach(
+function(section){
 
-        section.classList.remove("active");
+section.classList.remove(
+"active"
+);
 
-    });
-
-document
-    .querySelectorAll(".admin-tab")
-    .forEach(function(tab){
-
-        tab.classList.remove("active");
-
-    });
+});
 
 document
-    .getElementById(sectionId)
-    .classList.add("active");
+.querySelectorAll(".admin-tab")
+.forEach(
+function(tab){
 
-if(sectionId==="uploadSection"){
+tab.classList.remove(
+"active"
+);
 
-    document
-        .getElementById("uploadTab")
-        .classList.add("active");
+});
+
+document
+.getElementById(sectionId)
+.classList.add(
+"active"
+);
+
+if(
+sectionId==="uploadSection"
+){
+
+document
+.getElementById("uploadTab")
+.classList.add(
+"active"
+);
 
 }else{
 
-    document
-        .getElementById("deleteTab")
-        .classList.add("active");
+document
+.getElementById("deleteTab")
+.classList.add(
+"active"
+);
 
-    loadDeleteList();
+loadDeleteList();
 
 }
 
 }
 
 /* =========================
-SOURCE
+UPLOAD SOURCE
 ========================= */
 
 let uploadSource="device";
 
-function setUploadSource(source){
+function setUploadSource(
+source
+){
 
 uploadSource=source;
 
 document
-    .getElementById("deviceSource")
-    .classList.remove("active");
+.getElementById("deviceSource")
+.classList.remove(
+"active"
+);
 
 document
-    .getElementById("urlSource")
-    .classList.remove("active");
+.getElementById("urlSource")
+.classList.remove(
+"active"
+);
 
 document
-    .getElementById("deviceSourceButton")
-    .classList.remove("active");
+.getElementById(
+"deviceSourceButton"
+)
+.classList.remove(
+"active"
+);
 
 document
-    .getElementById("urlSourceButton")
-    .classList.remove("active");
+.getElementById(
+"urlSourceButton"
+)
+.classList.remove(
+"active"
+);
 
 if(source==="device"){
 
-    document
-        .getElementById("deviceSource")
-        .classList.add("active");
+document
+.getElementById("deviceSource")
+.classList.add(
+"active"
+);
 
-    document
-        .getElementById("deviceSourceButton")
-        .classList.add("active");
+document
+.getElementById(
+"deviceSourceButton"
+)
+.classList.add(
+"active"
+);
 
 }else{
 
-    document
-        .getElementById("urlSource")
-        .classList.add("active");
+document
+.getElementById("urlSource")
+.classList.add(
+"active"
+);
 
-    document
-        .getElementById("urlSourceButton")
-        .classList.add("active");
+document
+.getElementById(
+"urlSourceButton"
+)
+.classList.add(
+"active"
+);
 
 }
 
@@ -1266,63 +1514,80 @@ MEDIA TYPE
 function updateMediaFields(){
 
 const type=
-    document.getElementById("mediaType").value;
+document.getElementById(
+"mediaType"
+).value;
 
 const thumbnailField=
-    document.getElementById("thumbnailField");
+document.getElementById(
+"thumbnailField"
+);
 
 const urlThumbnailField=
-    document.getElementById("urlThumbnailField");
+document.getElementById(
+"urlThumbnailField"
+);
 
 if(type==="video"){
 
-    thumbnailField.style.display=
-        uploadSource==="device"
-        ? "block"
-        : "none";
+thumbnailField.style.display=
+uploadSource==="device"
+?"block"
+:"none";
 
-    urlThumbnailField.style.display=
-        uploadSource==="url"
-        ? "block"
-        : "none";
+urlThumbnailField.style.display=
+uploadSource==="url"
+?"block"
+:"none";
 
 }else{
 
-    thumbnailField.style.display="none";
-    urlThumbnailField.style.display="none";
+thumbnailField.style.display=
+"none";
+
+urlThumbnailField.style.display=
+"none";
 
 }
 
 }
 
 /* =========================
-YOUTUBE
+YOUTUBE ID
 ========================= */
 
 function getYouTubeId(url){
 
 if(!url){
 
-    return "";
+return "";
 
 }
 
 const patterns=[
-    /youtube\.com\/watch\?v=([^&]+)/i,
-    /youtu\.be\/([^?&]+)/i,
-    /youtube\.com\/embed\/([^?&]+)/i,
-    /youtube\.com\/shorts\/([^?&]+)/i
+
+/youtube\.com\/watch\?v=([^&]+)/i,
+
+/youtu\.be\/([^?&]+)/i,
+
+/youtube\.com\/embed\/([^?&]+)/i,
+
+/youtube\.com\/shorts\/([^?&]+)/i
+
 ];
 
-for(const pattern of patterns){
+for(
+const pattern of patterns
+){
 
-    const match=url.match(pattern);
+const match=
+url.match(pattern);
 
-    if(match){
+if(match){
 
-        return match[1];
+return match[1];
 
-    }
+}
 
 }
 
@@ -1331,59 +1596,74 @@ return "";
 }
 
 /* =========================
-CLOUDINARY UPLOAD
+CLOUDINARY
 ========================= */
 
-async function uploadToCloudinary(file,resourceType){
+async function uploadToCloudinary(
+file,
+resourceType
+){
 
-const cloudName="mnsjr7lc";
+const cloudName=
+"mnsjr7lc";
 
-const uploadPreset="Kush website upload";
+const uploadPreset=
+"Kush website upload";
 
 const uploadUrl=
-    "https://api.cloudinary.com/v1_1/" +
-    cloudName +
-    "/" +
-    resourceType +
-    "/upload";
+"https://api.cloudinary.com/v1_1/"
++
+cloudName
++
+"/"
++
+resourceType
++
+"/upload";
 
-const formData=new FormData();
-
-formData.append("file",file);
+const formData=
+new FormData();
 
 formData.append(
-    "upload_preset",
-    uploadPreset
+"file",
+file
 );
 
-const response=await fetch(
-    uploadUrl,
-    {
-        method:"POST",
-        body:formData
-    }
+formData.append(
+"upload_preset",
+uploadPreset
+);
+
+const response=
+await fetch(
+uploadUrl,
+{
+method:"POST",
+body:formData
+}
 );
 
 if(!response.ok){
 
-    const errorText=
-        await response.text();
+const errorText=
+await response.text();
 
-    throw new Error(
-        "Cloudinary upload failed: " +
-        errorText
-    );
+throw new Error(
+"Cloudinary upload failed: "
++
+errorText
+);
 
 }
 
 const result=
-    await response.json();
+await response.json();
 
 if(!result.secure_url){
 
-    throw new Error(
-        "Cloudinary did not return a file URL."
-    );
+throw new Error(
+"Cloudinary did not return a file URL."
+);
 
 }
 
@@ -1392,249 +1672,316 @@ return result.secure_url;
 }
 
 /* =========================
-POST MEDIA
+UPLOAD POST
+
+IMPORTANT:
+HOME  = page "home"
+PROJECTS = page "projects"
+
+This is what connects the
+Admin upload with the
+Home/Projects pages.
 ========================= */
 
 async function uploadMedia(){
 
 const status=
-    document.getElementById("uploadStatus");
+document.getElementById(
+"uploadStatus"
+);
 
 if(!db){
 
-    status.textContent=
-        "Firebase Firestore is not configured.";
+status.textContent=
+"Firebase Firestore is not configured.";
 
-    return;
+return;
 
 }
 
+/*
+Read the selected destination
+directly from the Post To box.
+*/
+
+const selectedPage=
+document.getElementById(
+"postPage"
+).value;
+
+/*
+Only allow the two valid
+destinations.
+*/
+
 const page=
-    document.getElementById("postPage").value;
+selectedPage==="projects"
+?"projects"
+:"home";
 
 const type=
-    document.getElementById("mediaType").value;
+document.getElementById(
+"mediaType"
+).value;
 
 const name=
-    document
-        .getElementById("mediaName")
-        .value
-        .trim();
+document.getElementById(
+"mediaName"
+).value.trim();
 
 const description=
-    document
-        .getElementById("mediaDescription")
-        .value
-        .trim();
+document.getElementById(
+"mediaDescription"
+).value.trim();
 
 if(!name){
 
-    status.textContent=
-        "Please enter a name.";
+status.textContent=
+"Please enter a name.";
 
-    return;
+return;
 
 }
 
 try{
 
-    status.textContent=
-        "Preparing post...";
+status.textContent=
+"Preparing post...";
 
-    let url="";
-    let thumbnailUrl="";
-    let youtubeId="";
-    let source=uploadSource;
+let url="";
 
-    /* DEVICE */
+let thumbnailUrl="";
 
-    if(uploadSource==="device"){
+let youtubeId="";
 
-        const mediaFile=
-            document
-                .getElementById("mediaFile")
-                .files[0];
+let source=uploadSource;
 
-        const thumbnailFile=
-            document
-                .getElementById("thumbnailFile")
-                .files[0];
+/* DEVICE */
 
-        if(!mediaFile){
+if(
+uploadSource==="device"
+){
 
-            status.textContent=
-                "Please select a photo or video.";
+const mediaFile=
+document.getElementById(
+"mediaFile"
+).files[0];
 
-            return;
+const thumbnailFile=
+document.getElementById(
+"thumbnailFile"
+).files[0];
 
-        }
+if(!mediaFile){
 
-        if(type==="video" && !thumbnailFile){
+status.textContent=
+"Please select a photo or video.";
 
-            status.textContent=
-                "Please select a video thumbnail.";
+return;
 
-            return;
+}
 
-        }
+if(
+type==="video" &&
+!thumbnailFile
+){
 
-        if(
-            type==="photo" &&
-            !mediaFile.type.startsWith("image/")
-        ){
+status.textContent=
+"Please select a video thumbnail.";
 
-            status.textContent=
-                "Please select an image file.";
+return;
 
-            return;
+}
 
-        }
+if(
+type==="photo" &&
+!mediaFile.type.startsWith(
+"image/"
+)
+){
 
-        if(
-            type==="video" &&
-            !mediaFile.type.startsWith("video/")
-        ){
+status.textContent=
+"Please select an image file.";
 
-            status.textContent=
-                "Please select a video file.";
+return;
 
-            return;
+}
 
-        }
+if(
+type==="video" &&
+!mediaFile.type.startsWith(
+"video/"
+)
+){
 
-        status.textContent=
-            "Uploading media...";
+status.textContent=
+"Please select a video file.";
 
-        const resourceType=
-            type==="video"
-            ? "video"
-            : "image";
+return;
 
-        url=
-            await uploadToCloudinary(
-                mediaFile,
-                resourceType
-            );
+}
 
-        if(type==="video" && thumbnailFile){
+status.textContent=
+"Uploading media...";
 
-            status.textContent=
-                "Uploading video thumbnail...";
+const resourceType=
+type==="video"
+?"video"
+:"image";
 
-            thumbnailUrl=
-                await uploadToCloudinary(
-                    thumbnailFile,
-                    "image"
-                );
+url=
+await uploadToCloudinary(
+mediaFile,
+resourceType
+);
 
-        }
+if(
+type==="video" &&
+thumbnailFile
+){
 
-    }
+status.textContent=
+"Uploading video thumbnail...";
 
-    /* URL */
+thumbnailUrl=
+await uploadToCloudinary(
+thumbnailFile,
+"image"
+);
 
-    else{
+}
 
-        const mediaURL=
-            document
-                .getElementById("mediaURL")
-                .value
-                .trim();
+}
 
-        const urlThumbnail=
-            document
-                .getElementById("urlThumbnail")
-                .value
-                .trim();
+/* URL */
 
-        if(!mediaURL){
+else{
 
-            status.textContent=
-                "Please enter a media URL.";
+const mediaURL=
+document.getElementById(
+"mediaURL"
+).value.trim();
 
-            return;
+const urlThumbnail=
+document.getElementById(
+"urlThumbnail"
+).value.trim();
 
-        }
+if(!mediaURL){
 
-        url=mediaURL;
+status.textContent=
+"Please enter a media URL.";
 
-        youtubeId=getYouTubeId(mediaURL);
+return;
 
-        if(type==="video" && urlThumbnail){
+}
 
-            thumbnailUrl=urlThumbnail;
+url=mediaURL;
 
-        }else if(youtubeId){
+youtubeId=
+getYouTubeId(
+mediaURL
+);
 
-            thumbnailUrl=
-                "https://img.youtube.com/vi/" +
-                youtubeId +
-                "/hqdefault.jpg";
+if(
+type==="video" &&
+urlThumbnail
+){
 
-        }
+thumbnailUrl=
+urlThumbnail;
 
-    }
+}else if(youtubeId){
 
-    status.textContent=
-        "Saving post information...";
+thumbnailUrl=
+"https://img.youtube.com/vi/"
++
+youtubeId
++
+"/hqdefault.jpg";
 
-    await db.collection("media").add({
+}
 
-        page:page,
+}
 
-        type:type,
+/* =========================
+SAVE TO FIRESTORE
+========================= */
 
-        name:name,
+status.textContent=
+"Saving post information...";
 
-        description:description,
+/*
+This document is the important
+connection between the uploader
+and the Home/Projects pages.
+*/
 
-        url:url,
+await db
+.collection("media")
+.add({
 
-        thumbnailUrl:thumbnailUrl,
+page:page,
 
-        youtubeId:youtubeId,
+type:type,
 
-        source:source,
+name:name,
 
-        createdAt:
-            firebase.firestore.FieldValue.serverTimestamp()
+description:description,
 
-    });
+url:url,
 
-    status.textContent=
-        "Posted successfully.";
+thumbnailUrl:thumbnailUrl,
 
-    document
-        .getElementById("mediaName")
-        .value="";
+youtubeId:youtubeId,
 
-    document
-        .getElementById("mediaDescription")
-        .value="";
+source:source,
 
-    document
-        .getElementById("mediaFile")
-        .value="";
+createdAt:
+firebase.firestore.FieldValue
+.serverTimestamp()
 
-    document
-        .getElementById("thumbnailFile")
-        .value="";
+});
 
-    document
-        .getElementById("mediaURL")
-        .value="";
+status.textContent=
+page==="projects"
+?"Posted successfully to Projects."
+:"Posted successfully to Home.";
 
-    document
-        .getElementById("urlThumbnail")
-        .value="";
+/* CLEAR FORM */
+
+document.getElementById(
+"mediaName"
+).value="";
+
+document.getElementById(
+"mediaDescription"
+).value="";
+
+document.getElementById(
+"mediaFile"
+).value="";
+
+document.getElementById(
+"thumbnailFile"
+).value="";
+
+document.getElementById(
+"mediaURL"
+).value="";
+
+document.getElementById(
+"urlThumbnail"
+).value="";
 
 }catch(error){
 
-    console.error(error);
+console.error(error);
 
-    status.textContent=
-        "Upload failed: " +
-        error.message;
+status.textContent=
+"Upload failed: "
++
+error.message;
 
 }
 
@@ -1647,112 +1994,133 @@ DELETE LIST
 async function loadDeleteList(){
 
 const list=
-    document.getElementById("deleteList");
+document.getElementById(
+"deleteList"
+);
 
 const status=
-    document.getElementById("deleteStatus");
+document.getElementById(
+"deleteStatus"
+);
 
 if(!db){
 
-    list.innerHTML=`
-        <div class="delete-card">
-            Firebase Firestore is not configured.
-        </div>
-    `;
+list.innerHTML=`
+<div class="delete-card">
+Firebase Firestore is not configured.
+</div>
+`;
 
-    return;
+return;
 
 }
 
-status.textContent="Loading posts...";
+status.textContent=
+"Loading posts...";
 
 try{
 
-    const snapshot=
-        await db.collection("media").get();
+const snapshot=
+await db
+.collection("media")
+.get();
 
-    const documents=snapshot.docs
-        .map(function(doc){
+const documents=
+snapshot.docs
+.map(function(doc){
 
-            return {
-                id:doc.id,
-                ...doc.data()
-            };
+return{
 
-        })
-        .sort(function(a,b){
+id:doc.id,
 
-            const aTime=
-                a.createdAt && a.createdAt.seconds
-                ? a.createdAt.seconds
-                : 0;
+...doc.data()
 
-            const bTime=
-                b.createdAt && b.createdAt.seconds
-                ? b.createdAt.seconds
-                : 0;
+};
 
-            return bTime-aTime;
+})
+.sort(function(a,b){
 
-        });
+const aTime=
+a.createdAt &&
+a.createdAt.seconds
+?a.createdAt.seconds
+:0;
 
-    status.textContent="";
+const bTime=
+b.createdAt &&
+b.createdAt.seconds
+?b.createdAt.seconds
+:0;
 
-    if(!documents.length){
+return bTime-aTime;
 
-        list.innerHTML=`
-            <div class="delete-card">
-                No posts available.
-            </div>
-        `;
+});
 
-        return;
+status.textContent="";
 
-    }
+if(!documents.length){
 
-    list.innerHTML=
-        documents
-        .map(function(data){
+list.innerHTML=`
+<div class="delete-card">
+No posts available.
+</div>
+`;
 
-            const name=
-                escapeHTML(data.name);
+return;
 
-            const description=
-                escapeHTML(data.description);
+}
 
-            const page=
-                escapeHTML(data.page);
+list.innerHTML=
+documents
+.map(function(data){
 
-            return `
-            <div class="delete-card">
+const name=
+escapeHTML(data.name);
 
-                <h3>${name}</h3>
+const description=
+escapeHTML(
+data.description
+);
 
-                <p>${description}</p>
+const page=
+escapeHTML(data.page);
 
-                <p>
-                    Posted to: ${page}
-                </p>
+return`
 
-                <button
-                    class="delete-button"
-                    onclick="deletePost('${data.id}')"
-                >
-                    Delete
-                </button>
+<div class="delete-card">
 
-            </div>
-            `;
+<h3>
+${name}
+</h3>
 
-        })
-        .join("");
+<p>
+${description}
+</p>
+
+<p>
+Posted to: ${page}
+</p>
+
+<button
+class="delete-button"
+onclick="deletePost('${data.id}')"
+>
+Delete
+</button>
+
+</div>
+
+`;
+
+})
+.join("");
 
 }catch(error){
 
-    console.error(error);
+console.error(error);
 
-    status.textContent=
-        "Could not load posts.";
+status.textContent=
+"Could not load posts.";
 
 }
 
@@ -1764,19 +2132,27 @@ ESCAPE HTML
 
 function escapeHTML(value){
 
-return String(value || "").replace(
-    /[&<>"']/g,
-    function(character){
+return String(
+value || ""
+).replace(
+/[&<>"']/g,
+function(character){
 
-        return {
-            "&":"&amp;",
-            "<":"&lt;",
-            ">":"&gt;",
-            '"':"&quot;",
-            "'":"&#039;"
-        }[character];
+return{
 
-    }
+"&":"&amp;",
+
+"<":"&lt;",
+
+">":"&gt;",
+
+'"':"&quot;",
+
+"'":"&#039;"
+
+}[character];
+
+}
 );
 
 }
@@ -1785,56 +2161,61 @@ return String(value || "").replace(
 DELETE POST
 ========================= */
 
-async function deletePost(documentId){
+async function deletePost(
+documentId
+){
 
 if(!db){
 
-    return;
+return;
 
 }
 
 const confirmed=
-    confirm(
-        "Are you sure you want to delete this post?"
-    );
+confirm(
+"Are you sure you want to delete this post?"
+);
 
 if(!confirmed){
 
-    return;
+return;
 
 }
 
 const status=
-    document.getElementById("deleteStatus");
+document.getElementById(
+"deleteStatus"
+);
 
 try{
 
-    status.textContent=
-        "Deleting post...";
+status.textContent=
+"Deleting post...";
 
-    await db
-        .collection("media")
-        .doc(documentId)
-        .delete();
+await db
+.collection("media")
+.doc(documentId)
+.delete();
 
-    status.textContent=
-        "Post deleted successfully.";
+status.textContent=
+"Post deleted successfully.";
 
-    loadDeleteList();
+loadDeleteList();
 
 }catch(error){
 
-    console.error(error);
+console.error(error);
 
-    status.textContent=
-        "Delete failed: " +
-        error.message;
+status.textContent=
+"Delete failed: "
++
+error.message;
 
 }
 
 }
 
-/* INITIAL MEDIA SETTINGS */
+/* INITIAL SETTINGS */
 
 updateMediaFields();
 
