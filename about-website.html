@@ -456,7 +456,7 @@ Share Link
 <div class="qr-area">
 
 <img
-src="pageqr.png"
+src="webqr.png"
 alt="Website QR Code"
 class="qr-image"
 id="qrImage"
@@ -498,7 +498,7 @@ Scan this QR code to visit the website.
 </p>
 
 <img
-src="pageqr.png"
+src="webqr.png"
 alt="Website QR Code"
 class="qr-large"
 >
@@ -688,7 +688,7 @@ try{
 Fetch the QR image and turn it into a file.
 */
 
-const response=await fetch("pageqr.png");
+const response=await fetch("webqr.png");
 
 if(!response.ok){
 
@@ -700,7 +700,7 @@ const blob=await response.blob();
 
 const file=new File(
 [blob],
-"pageqr.png",
+"webqr.png",
 {
 type:blob.type||"image/png"
 }
@@ -741,7 +741,7 @@ Open the QR image so the user can save/share it.
 */
 
 const imageWindow=window.open(
-"pageqr.png",
+"webqr.png",
 "_blank"
 );
 
