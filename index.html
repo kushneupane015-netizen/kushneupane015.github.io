@@ -146,6 +146,82 @@ header{
     margin:8px 5px;
 }
 
+
+/* ================================================= */
+/* WELCOME BANNER - ADDED */
+/* ================================================= */
+
+.welcome-banner{
+    width:min(1100px,calc(100% - 40px));
+    margin:0 auto 10px;
+    min-height:78px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+
+    border:1px solid rgba(190,80,255,.65);
+    border-radius:18px;
+
+    background:linear-gradient(
+        90deg,
+        rgba(45,0,80,.72),
+        rgba(115,0,180,.42),
+        rgba(45,0,80,.72)
+    );
+
+    box-shadow:
+        0 0 18px rgba(160,40,255,.35),
+        inset 0 0 25px rgba(160,40,255,.12);
+}
+
+.welcome-banner::before,
+.welcome-banner::after{
+    content:"";
+    position:absolute;
+    width:90px;
+    height:1px;
+
+    background:linear-gradient(
+        90deg,
+        transparent,
+        #c45cff,
+        transparent
+    );
+
+    box-shadow:0 0 10px #c45cff;
+}
+
+.welcome-banner::before{
+    left:7%;
+}
+
+.welcome-banner::after{
+    right:7%;
+}
+
+.welcome-banner-content{
+    text-align:center;
+    position:relative;
+    z-index:1;
+}
+
+.welcome-banner h2{
+    font-size:clamp(18px,3vw,30px);
+    letter-spacing:5px;
+    text-transform:uppercase;
+    text-shadow:0 0 12px rgba(210,100,255,.9);
+}
+
+.welcome-banner p{
+    margin-top:7px;
+    font-size:13px;
+    letter-spacing:3px;
+    color:rgba(255,255,255,.8);
+}
+
+
 /* MAIN */
 
 main{
@@ -167,6 +243,7 @@ main{
     font-size:18px;
     color:rgba(255,255,255,.85);
 }
+
 
 /* MEDIA GRID */
 
@@ -220,6 +297,7 @@ main{
     border-radius:20px;
     color:rgba(255,255,255,.8);
 }
+
 
 /* FULL SCREEN MEDIA VIEWER */
 
@@ -276,6 +354,7 @@ main{
     border-radius:12px;
 }
 
+
 /* MOBILE */
 
 @media(max-width:600px){
@@ -287,6 +366,29 @@ main{
     .menu{
         right:15px;
         width:min(245px,calc(100vw - 30px));
+    }
+
+    /* WELCOME BANNER MOBILE */
+
+    .welcome-banner{
+        width:calc(100% - 30px);
+        min-height:70px;
+        margin-bottom:5px;
+    }
+
+    .welcome-banner h2{
+        font-size:17px;
+        letter-spacing:3px;
+    }
+
+    .welcome-banner p{
+        font-size:10px;
+        letter-spacing:2px;
+    }
+
+    .welcome-banner::before,
+    .welcome-banner::after{
+        width:35px;
     }
 
     main{
@@ -311,6 +413,7 @@ main{
         max-height:85vh;
     }
 }
+
 </style>
 </head>
 
@@ -351,6 +454,24 @@ main{
 
 </header>
 
+
+<!-- ================================================= -->
+<!-- WELCOME BANNER - ADDED -->
+<!-- ================================================= -->
+
+<section class="welcome-banner">
+
+    <div class="welcome-banner-content">
+
+        <h2>Welcome To My Website</h2>
+
+        <p>EXPLORE • CREATE • BEYOND</p>
+
+    </div>
+
+</section>
+
+
 <main>
 
 <div class="page-title">
@@ -365,6 +486,7 @@ main{
 
 </main>
 
+
 <!-- FULL SCREEN VIEWER -->
 
 <div id="mediaViewer">
@@ -375,10 +497,13 @@ main{
 
 </div>
 
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script src="firebase-config.js"></script>
+
 
 <script>
 
@@ -403,20 +528,31 @@ if(firebaseReady){
     }
 }
 
+
 /* MENU */
 
 const menuButton=document.getElementById("menuButton");
+
 const menu=document.getElementById("menu");
 
+
 function toggleMenu(){
+
     menu.classList.toggle("active");
+
     menuButton.classList.toggle("active");
+
 }
 
+
 function closeMenu(){
+
     menu.classList.remove("active");
+
     menuButton.classList.remove("active");
+
 }
+
 
 document.addEventListener("click",function(event){
 
@@ -424,69 +560,93 @@ document.addEventListener("click",function(event){
         !menu.contains(event.target) &&
         !menuButton.contains(event.target)
     ){
+
         closeMenu();
+
     }
 
 });
+
 
 /* ESCAPE HTML */
 
 function escapeHTML(value){
 
     return String(value || "").replace(
+
         /[&<>"']/g,
+
         function(character){
 
             return {
+
                 "&":"&amp;",
                 "<":"&lt;",
                 ">":"&gt;",
                 '"':"&quot;",
                 "'":"&#039;"
+
             }[character];
 
         }
+
     );
+
 }
+
 
 /* YOUTUBE */
 
 function getYouTubeId(url){
 
     if(!url){
+
         return "";
+
     }
 
     const patterns=[
+
         /youtube\.com\/watch\?v=([^&]+)/i,
+
         /youtu\.be\/([^?&]+)/i,
+
         /youtube\.com\/embed\/([^?&]+)/i,
+
         /youtube\.com\/shorts\/([^?&]+)/i
+
     ];
+
 
     for(const pattern of patterns){
 
         const match=url.match(pattern);
 
         if(match){
+
             return match[1];
+
         }
 
     }
 
     return "";
+
 }
+
 
 /* VIEWER */
 
 function openViewer(type,url){
 
     const viewer=document.getElementById("mediaViewer");
+
     const content=document.getElementById("viewerContent");
 
     content.innerHTML="";
 
     const youtubeId=getYouTubeId(url);
+
 
     if(youtubeId){
 
@@ -504,7 +664,9 @@ function openViewer(type,url){
 
         content.appendChild(iframe);
 
-    }else if(type==="photo"){
+    }
+
+    else if(type==="photo"){
 
         const image=document.createElement("img");
 
@@ -512,64 +674,86 @@ function openViewer(type,url){
 
         content.appendChild(image);
 
-    }else{
+    }
+
+    else{
 
         const video=document.createElement("video");
 
         video.src=url;
+
         video.controls=true;
+
         video.autoplay=true;
 
         content.appendChild(video);
 
     }
 
+
     viewer.classList.add("active");
+
     document.body.style.overflow="hidden";
+
 }
+
 
 function closeViewer(){
 
     const viewer=document.getElementById("mediaViewer");
+
     const content=document.getElementById("viewerContent");
 
     viewer.classList.remove("active");
+
     content.innerHTML="";
+
     document.body.style.overflow="";
 
 }
+
 
 document
     .getElementById("mediaViewer")
     .addEventListener("click",function(event){
 
         if(event.target===this){
+
             closeViewer();
+
         }
 
     });
 
+
 document.addEventListener("keydown",function(event){
 
     if(event.key==="Escape"){
+
         closeViewer();
+
     }
 
 });
+
 
 /* MEDIA CARD */
 
 function mediaCard(data){
 
     const url=escapeHTML(data.url);
+
     const name=escapeHTML(data.name);
+
     const description=escapeHTML(data.description);
 
     const safeURL=String(data.url || "").replace(/'/g,"\\'");
 
+
     if(data.type==="photo"){
 
         return `
+
         <article class="media-card">
 
             <img
@@ -588,37 +772,48 @@ function mediaCard(data){
             </div>
 
         </article>
+
         `;
 
     }
 
+
     let thumbnail="";
+
 
     if(data.thumbnailUrl){
 
         thumbnail=`
+
         <img
             class="media-preview"
             src="${escapeHTML(data.thumbnailUrl)}"
             alt="${name}"
             onclick="openViewer('video','${safeURL}')"
         >
+
         `;
 
-    }else{
+    }
+
+    else{
 
         thumbnail=`
+
         <video
             class="media-preview"
             src="${url}"
             preload="metadata"
             onclick="openViewer('video','${safeURL}')"
         ></video>
+
         `;
 
     }
 
+
     return `
+
     <article class="media-card">
 
         ${thumbnail}
@@ -632,8 +827,11 @@ function mediaCard(data){
         </div>
 
     </article>
+
     `;
+
 }
+
 
 /* LOAD HOME MEDIA */
 
@@ -641,83 +839,131 @@ async function loadMedia(page){
 
     const box=document.getElementById("mediaGrid");
 
+
     if(!box){
+
         return;
+
     }
+
 
     if(!db){
 
         box.innerHTML=`
+
             <div class="empty-state">
+
                 Firebase is not configured.
+
             </div>
+
         `;
 
         return;
+
     }
+
 
     try{
 
         const snapshot=
+
             await db.collection("media")
+
             .where("page","==",page)
+
             .get();
 
+
         const documents=snapshot.docs
+
             .map(function(doc){
 
                 return {
+
                     id:doc.id,
+
                     ...doc.data()
+
                 };
 
             })
+
+
             .sort(function(a,b){
 
                 const aTime=
+
                     a.createdAt && a.createdAt.seconds
+
                     ? a.createdAt.seconds
+
                     : 0;
 
+
                 const bTime=
+
                     b.createdAt && b.createdAt.seconds
+
                     ? b.createdAt.seconds
+
                     : 0;
+
 
                 return bTime-aTime;
 
             });
 
+
         if(!documents.length){
 
             box.innerHTML=`
+
                 <div class="empty-state">
+
                     No uploads yet.
+
                 </div>
+
             `;
 
             return;
+
         }
 
+
         box.innerHTML=
+
             documents
+
             .map(mediaCard)
+
             .join("");
 
-    }catch(error){
+
+    }
+
+    catch(error){
 
         console.error(error);
 
+
         box.innerHTML=`
+
             <div class="empty-state">
+
                 Could not load uploads.
+
                 Check your Firebase setup.
+
             </div>
+
         `;
 
     }
 
 }
+
 
 loadMedia("home");
 
